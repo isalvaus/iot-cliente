@@ -9,6 +9,7 @@ let port = 38;
 let device = Device.Luz
 
 let temp = 22
+let sensorTemp = input.temperature()
 let valorPot = 0
 
 //Serial
@@ -53,21 +54,26 @@ if (_valorPot != valorPot )
     data.value = pins.analogReadPin(AnalogPin.P1)
     radio.sendString(JSON.stringify(data));
     serial.writeString("Sending value" + JSON.stringify(data))
-    pins.P2.analogWrite(data.value);
+
 
     valorPot = _valorPot
 }
-    let sensorTemp = input.temperature();
+
+if (sensorTemp != input.temperature()){
     serial.writeValue("Sensor Temp", sensorTemp);
     if (sensorTemp < temp) {
         pins.P0.digitalWrite(true);
-        serial.writeValue("Radiador", 1)
+        serial.writeValue("Radiador:", 1)
     }
 
     else if (sensorTemp > temp) {
         pins.P0.digitalWrite(false);
-        serial.writeValue("Radiador", 0)
+        serial.writeValue("Radiador:", 0)
     }
+
+    sensorTemp = input.temperature()
+}
+
 });
 
 
@@ -88,8 +94,7 @@ radio.onReceivedString((dataReceived) => {
     switch (data.command) {
         case "LUZ":
 
-            //	Serial.println("LUZ");
-
+            serial.writeString("LUZ");
             pins.P2.analogWrite(data.value);
             break;
 
