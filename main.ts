@@ -11,7 +11,10 @@ let device = Device.Luz
 let temp = 22
 let valorPot = 0
 
+//Serial
+serial.redirectToUSB()
 
+//radio
 radio.setGroup(port);
 
 
@@ -44,6 +47,7 @@ input.onButtonPressed(Button.A, function () {
 
 loops.everyInterval(500, () => {
     let _valorPot = pins.analogReadPin(AnalogPin.P1)
+
 if (_valorPot != valorPot )
   {  data.command = (device == Device.Luz) ? "LUZ" : "TEMP";
     data.value = pins.analogReadPin(AnalogPin.P1)
