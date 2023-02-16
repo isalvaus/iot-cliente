@@ -19,11 +19,6 @@ serial.redirectToUSB()
 radio.setGroup(port);
 
 
-let data = {
-    command: "",
-    value: 0
-};
-
 
 input.onLogoEvent(TouchButtonEvent.Touched, () => {
     if (device == Device.Luz) {
@@ -38,10 +33,8 @@ input.onLogoEvent(TouchButtonEvent.Touched, () => {
 
 
 input.onButtonPressed(Button.A, function () {
-    data.command = "DOOR";
-    data.value = 1;
-    radio.sendString(JSON.stringify(data));
-    serial.writeString(JSON.stringify(data))
+    radio.sendValue("DOOR", 1);
+    serial.writeValue("DOOR", 1)
 })
 
 
@@ -49,30 +42,27 @@ input.onButtonPressed(Button.A, function () {
 loops.everyInterval(500, () => {
     let _valorPot = pins.analogReadPin(AnalogPin.P1)
 
-if (_valorPot != valorPot )
-  {  data.command = (device == Device.Luz) ? "LUZ" : "TEMP";
-    data.value = pins.analogReadPin(AnalogPin.P1)
-    radio.sendString(JSON.stringify(data));
-    serial.writeString("Sending value" + JSON.stringify(data))
+    if (_valorPot != valorPot ){ 
+        radio.sendValue((device == Device.Luz) ? "LUZ" : "TEMP", pins.analogReadPin(AnalogPin.P1));
+        serial.writeValue((device == Device.Luz) ? "LUZ" : "TEMP", pins.analogReadPin(AnalogPin.P1))
 
-
-    valorPot = _valorPot
-}
-
-if (sensorTemp != input.temperature()){
-    serial.writeValue("Sensor Temp", sensorTemp);
-    if (sensorTemp < temp) {
-        pins.P0.digitalWrite(true);
-        serial.writeValue("Radiador:", 1)
+        valorPot = _valorPot
     }
 
-    else if (sensorTemp > temp) {
-        pins.P0.digitalWrite(false);
-        serial.writeValue("Radiador:", 0)
-    }
+    if (sensorTemp != input.temperature()){
+        serial.writeValue("Sensor Temp", sensorTemp);
+        if (sensorTemp < temp) {
+            pins.P0.digitalWrite(true);
+            serial.writeValue("Radiador:", 1)
+        }
 
-    sensorTemp = input.temperature()
-}
+        else if (sensorTemp > temp) {
+            pins.P0.digitalWrite(false);
+            serial.writeValue("Radiador:", 0)
+        }
+
+        sensorTemp = input.temperature()
+    }
 
 });
 
@@ -82,26 +72,22 @@ if (sensorTemp != input.temperature()){
 
 
 
-radio.onReceivedString((dataReceived) => {
-    port = 38
+radio.onReceivedValue((command, value) => {
     
-    basic.showIcon(IconNames.Heart)
+    pins.P1.analogWrite(value);
+    serial.writeValue(command, value);
 
-    let data = JSON.parse(dataReceived);
-    pins.P1.analogWrite(data.value);
-    serial.writeString("Data received" + dataReceived);
-
-    switch (data.command) {
+    switch (command) {
         case "LUZ":
 
             serial.writeString("LUZ");
-            pins.P2.analogWrite(data.value);
+            pins.P2.analogWrite(value);
             break;
 
 
 
         case "TEMP":
-            temp = Math.map(data.value, 0, 1023, -100, 100);
+            temp = Math.map(value, 0, 1023, -100, 100);
             serial.writeValue("Setting Temp:", temp);
             break;
     }
